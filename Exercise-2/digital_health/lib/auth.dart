@@ -10,7 +10,7 @@ final _scopes = [
   'https://www.googleapis.com/auth/fitness.sleep.read'
 ];
 
-Future<List<fitness.Session>?> authenticateAndFetchData() async {
+Future<List<fitness.DataPoint>?> authenticateAndFetchData() async {
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: _scopes);
 
   try {
@@ -41,10 +41,17 @@ Future<List<fitness.Session>?> authenticateAndFetchData() async {
   return null;
 }
 
-Future<List<fitness.Session>> fetchData(http.Client client) async {
+Future<List<fitness.DataPoint>> fetchData(http.Client client) async {
   var data = await fitness.FitnessApi(client).users.sessions.list(
     'me',
-    activityType: [72], // 72 corresponds to sleep in Google Fit
+    activityType: [7], // 72 corresponds to sleep in Google Fit
   );
-  return data.session ?? [];
+  final DateTime endTime = DateTime.now();
+  final DateTime startTime = endTime.subtract(Duration(days: 7));
+  final fitness.Dataset dataset = await fitness.FitnessApi(client).users.dataSources.datasets.get(
+    'me',
+    'derived:com.google.step_count.delta:com.google.android.gms:estimated_steps',
+      '${startTime.millisecondsSinceEpoch * 1000000}-${endTime.millisecondsSinceEpoch * 1000000}',
+  );
+  return dataset.point ?? [];
 }
