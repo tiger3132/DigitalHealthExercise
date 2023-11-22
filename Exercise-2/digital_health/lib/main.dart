@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Google Fit Sleep Data',
+      title: 'Google Fit Step Data',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -25,25 +25,25 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<fitness.Session> sleepSessions = [];
+  List<fitness.DataPoint> stepCounts = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Google Fit Sleep Data'),
+        title: Text('Google Fit Step Count'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: <Widget>[
             ElevatedButton(
-              child: Text("Fetch Google Fit Sleep Data"),
+              child: Text("Fetch Google Fit Step Count"),
               onPressed: () async {
-                List<fitness.Session>? fetchedSessions = await authenticateAndFetchData();
+                List<fitness.DataPoint>? fetchedSessions = await authenticateAndFetchData();
                 if (fetchedSessions != null) {
                   setState(() {
-                    sleepSessions = fetchedSessions;
+                    stepCounts = fetchedSessions.reversed.toList();
                   });
                 }
               },
@@ -51,18 +51,23 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(height: 20),  // Provides some spacing
             Expanded(
               child: ListView.builder(
-                itemCount: sleepSessions.length,
+                itemCount: stepCounts.length,
                 itemBuilder: (context, index) {
-                  final session = sleepSessions[index];
-                  final startDate = DateTime.fromMillisecondsSinceEpoch(int.parse(session.startTimeMillis!));
-                  final endDate = DateTime.fromMillisecondsSinceEpoch(int.parse(session.endTimeMillis!));
+                  final session = stepCounts[index];
+
+                  var val = session.value?.first.intVal;
+
+                  var start = int.parse(session.startTimeNanos!) ~/ 1000;
+                  var end = int.parse(session.endTimeNanos!) ~/ 1000;
+                  final startDate = DateTime.fromMicrosecondsSinceEpoch(start);
+                  final endDate = DateTime.fromMicrosecondsSinceEpoch(end);
 
                   final formattedStartDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(startDate);
                   final formattedEndDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(endDate);
 
                   return ListTile(
-                    title: Text("Sleep Session"),
-                    subtitle: Text("Sleep Time: $formattedStartDate\nWake-up Time: $formattedEndDate"),
+                    title: Text("Step count from $formattedStartDate to $formattedEndDate"),
+                    subtitle: Text("Step Count: $val"),
                     // Modify as per your requirements
                   );
                 },
